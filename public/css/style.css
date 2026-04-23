@@ -1,0 +1,129 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0a14;
+    color: #fff;
+    font-family: 'Press Start 2P', monospace;
+    overflow: hidden;
+}
+
+/* Lobby */
+.lobby-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.lobby-container {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+}
+
+.title {
+    font-size: 32px;
+    color: #fff;
+    text-shadow: 0 0 20px #4af, 4px 4px 0 #004466;
+    letter-spacing: 4px;
+}
+
+.pixel-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    padding: 14px 28px;
+    background: #1a3a5c;
+    color: #4af;
+    border: 3px solid #4af;
+    cursor: pointer;
+    image-rendering: pixelated;
+    transition: background 0.1s, color 0.1s;
+    outline: none;
+}
+
+.pixel-btn:hover {
+    background: #4af;
+    color: #000;
+}
+
+.pixel-btn.small {
+    font-size: 10px;
+    padding: 8px 14px;
+}
+
+.waiting-text {
+    font-size: 12px;
+    color: #aaa;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+.room-label {
+    font-size: 9px;
+    color: #666;
+}
+
+.link-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #111;
+    border: 2px solid #333;
+    padding: 10px 14px;
+    font-size: 9px;
+    color: #4af;
+    word-break: break-all;
+}
+
+/* Game */
+.game-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    cursor: crosshair;
+}
+
+#game-canvas {
+    display: block;
+    image-rendering: pixelated;
+}
+
+.overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    pointer-events: none;
+}
+
+.overlay.hidden {
+    display: none;
+}
+
+.overlay.active {
+    display: flex;
+}
+
+#overlay-text {
+    font-size: 28px;
+    text-align: center;
+    text-shadow: 3px 3px 0 #000;
+    pointer-events: none;
+}
+
+#new-game-btn {
+    pointer-events: all;
+}

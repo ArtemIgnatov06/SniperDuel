@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sniper Duel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="lobby-page">
+    <div class="lobby-container">
+        <h1 class="title">SNIPER DUEL</h1>
+        <div id="main-screen">
+            <button class="pixel-btn" id="create-btn">CREATE GAME</button>
+        </div>
+        <div id="waiting-screen" style="display:none;">
+            <p class="waiting-text">WAITING FOR OPPONENT...</p>
+            <p class="room-label">SHARE THIS LINK:</p>
+            <div class="link-box">
+                <span id="room-link"></span>
+                <button class="pixel-btn small" id="copy-btn">COPY</button>
+            </div>
+            <p id="copy-status" style="height:1em;"></p>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        document.getElementById('create-btn').addEventListener('click', () => {
+            socket.emit('createRoom');
+        });
+
+        socket.on('roomCreated', ({ roomId }) => {
+            const url = `${window.location.origin}/game.html?room=${roomId}`;
+            document.getElementById('main-screen').style.display = 'none';
+            document.getElementById('waiting-screen').style.display = 'block';
+            document.getElementById('room-link').textContent = url;
+
+            document.getElementById('copy-btn').addEventListener('click', () => {
+                navigator.clipboard.writeText(url).then(() => {
+                    document.getElementById('copy-status').textContent = 'COPIED!';
+                    setTimeout(() => {
+                        document.getElementById('copy-status').textContent = '';
+                    }, 2000);
+                });
+            });
+
+            // Redirect this player to the game
+            window.location.href = `/game.html?room=${roomId}`;
+        });
+    </script>
+</body>
+</html>
