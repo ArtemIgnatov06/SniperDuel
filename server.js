@@ -32,7 +32,8 @@ const SHOOT_COOLDOWN = 1.0;
 const MAX_BLOCKS = 10;
 const BLOCK_REGEN_TIME = 7.0;
 const BLOCK_PLACE_RADIUS = 150;
-const FLOOR_Y = GAME_HEIGHT - BLOCK_SIZE;
+// Must match floor block position from generateMap: Math.floor(H/32)*32 - 32
+const FLOOR_Y = Math.floor(GAME_HEIGHT / BLOCK_SIZE) * BLOCK_SIZE - BLOCK_SIZE;
 const DASH_SPEED = 700;
 const DASH_DURATION = 0.15;
 const DASH_COOLDOWN_TIME = 5.0;

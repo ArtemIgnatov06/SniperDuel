@@ -14,6 +14,18 @@
         <p id="overlay-text"></p>
         <button class="pixel-btn" id="new-game-btn" style="display:none;">NEW GAME</button>
     </div>
+    <div id="settings-overlay" class="settings-overlay hidden">
+        <div class="settings-panel">
+            <div class="settings-title">SETTINGS</div>
+            <div class="settings-section-title">KEY BINDINGS</div>
+            <div id="bindings-grid" class="bindings-grid"></div>
+            <div class="settings-buttons">
+                <button class="pixel-btn small" id="reset-bindings-btn">RESET DEFAULTS</button>
+                <button class="pixel-btn small" id="close-settings-btn">CLOSE</button>
+            </div>
+            <div class="settings-hint">ESC TO CLOSE</div>
+        </div>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/network.js"></script>
     <script src="/js/input.js"></script>

@@ -127,3 +127,101 @@ body {
 #new-game-btn {
     pointer-events: all;
 }
+
+/* Settings overlay */
+.settings-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.settings-overlay.hidden { display: none; }
+
+.settings-panel {
+    background: #0d0d1a;
+    border: 3px solid #4af;
+    padding: 32px 40px;
+    min-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.settings-title {
+    font-size: 18px;
+    color: #fff;
+    letter-spacing: 3px;
+    text-shadow: 0 0 12px #4af;
+}
+
+.settings-section-title {
+    font-size: 8px;
+    color: #4af;
+    letter-spacing: 2px;
+    align-self: flex-start;
+}
+
+.bindings-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.binding-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.binding-label {
+    font-size: 8px;
+    color: #ccc;
+    flex: 1;
+}
+
+.binding-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    padding: 7px 14px;
+    min-width: 80px;
+    background: #1a2a3a;
+    color: #4af;
+    border: 2px solid #335;
+    cursor: pointer;
+    text-align: center;
+    outline: none;
+}
+
+.binding-btn:hover {
+    border-color: #4af;
+    background: #1a3a5c;
+}
+
+.binding-btn.listening {
+    background: #2a1a00;
+    border-color: #ffdd44;
+    color: #ffdd44;
+    animation: pulse 0.6s step-end infinite;
+}
+
+@keyframes pulse {
+    50% { opacity: 0.4; }
+}
+
+.settings-buttons {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.settings-hint {
+    font-size: 6px;
+    color: #444;
+}

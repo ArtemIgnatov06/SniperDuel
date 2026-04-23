@@ -21,6 +21,9 @@ const DASH_COOLDOWN_C = 5.0;
 // Opponent interpolation delay — small buffer to smooth opponent movement
 const INTERP_DELAY_MS = 50;
 
+// Spawn Y must match server's floor block position exactly
+const SPAWN_Y = Math.floor(GAME_HEIGHT / BLOCK_SIZE) * BLOCK_SIZE - BLOCK_SIZE - PLAYER_HEIGHT;
+
 // Canvas setup
 const canvas = document.getElementById('game-canvas');
 const overlay = document.getElementById('overlay');
@@ -118,6 +121,28 @@ function showClientTracer() {
     }
 
     Renderer.addTracer(ox, oy, ox + dx * closestT, oy + dy * closestT);
+}
+
+// Immediately place local player at their spawn point without waiting for a server snapshot.
+// Server snapshot will fine-correct if needed (>24px drift threshold).
+function spawnLocalPlayer() {
+    if (myPlayerNum === null) return;
+    localPlayer.x = myPlayerNum === 1 ? 100 : GAME_WIDTH - 100 - PLAYER_WIDTH;
+    localPlayer.y = SPAWN_Y;
+    localPlayer.vx = 0;
+    localPlayer.vy = 0;
+    localPlayer.isOnGround = false;
+    localPlayer.coyoteTimer = 0;
+    localPlayer.alive = true;
+    localPlayer.shootCooldown = 0;
+    localPlayer.blockCount = MAX_BLOCKS_C;
+    localPlayer.blockRegenTimer = 0;
+    localPlayer.dashCooldown = 0;
+    localPlayer.facingRight = myPlayerNum === 1;
+    localPlayer.initialized = true;
+    prevLocalJump = false;
+    localDashCooldown = 0;
+    localDashTimer = 0;
 }
 
 // Place block immediately on the client, send to server for authoritative confirmation.
@@ -385,7 +410,7 @@ Network.onGameStart((data) => {
     playerBlocks = data.playerBlocks;
     scores = data.scores;
     gameState = 'playing';
-    localPlayer.initialized = false;
+    spawnLocalPlayer();
     hideOverlay();
     Input.startSending();
 });
@@ -444,10 +469,7 @@ Network.onRoundReset((data) => {
     gameState = 'playing';
     roundWinner = null;
     snapshots = [];
-    localPlayer.initialized = false;
-    prevLocalJump = false;
-    localDashCooldown = 0;
-    localDashTimer = 0;
+    spawnLocalPlayer();
     hideOverlay();
 });
 
@@ -500,6 +522,110 @@ function hideOverlay() {
     overlay.classList.remove('active');
     newGameBtn.style.display = 'none';
 }
+
+// --- Settings overlay ---
+const settingsOverlay = document.getElementById('settings-overlay');
+let settingsOpen = false;
+let listeningForAction = null;
+
+const ACTION_LABELS = {
+    left:       'MOVE LEFT',
+    right:      'MOVE RIGHT',
+    jump:       'JUMP',
+    placeBelow: 'BLOCK BELOW',
+    placeFront: 'BLOCK FRONT',
+    dash:       'DASH',
+};
+
+function keyDisplayName(key) {
+    if (key === ' ')          return 'SPACE';
+    if (key === 'shift')      return 'SHIFT';
+    if (key === 'control')    return 'CTRL';
+    if (key === 'alt')        return 'ALT';
+    if (key === 'arrowleft')  return 'LEFT';
+    if (key === 'arrowright') return 'RIGHT';
+    if (key === 'arrowup')    return 'UP';
+    if (key === 'arrowdown')  return 'DOWN';
+    return key.toUpperCase();
+}
+
+function renderBindings() {
+    const grid = document.getElementById('bindings-grid');
+    const b = Input.getBindings();
+    grid.innerHTML = '';
+    for (const [action, label] of Object.entries(ACTION_LABELS)) {
+        const row = document.createElement('div');
+        row.className = 'binding-row';
+
+        const lbl = document.createElement('span');
+        lbl.className = 'binding-label';
+        lbl.textContent = label;
+
+        const btn = document.createElement('button');
+        btn.className = 'binding-btn';
+        if (action === listeningForAction) {
+            btn.textContent = '...';
+            btn.classList.add('listening');
+        } else {
+            btn.textContent = keyDisplayName(b[action]);
+        }
+        btn.addEventListener('click', () => {
+            listeningForAction = action;
+            renderBindings();
+        });
+
+        row.appendChild(lbl);
+        row.appendChild(btn);
+        grid.appendChild(row);
+    }
+}
+
+function openSettings() {
+    settingsOpen = true;
+    listeningForAction = null;
+    settingsOverlay.classList.remove('hidden');
+    renderBindings();
+    Input.stopSending();
+}
+
+function closeSettings() {
+    settingsOpen = false;
+    listeningForAction = null;
+    settingsOverlay.classList.add('hidden');
+    if (gameState === 'playing') Input.startSending();
+}
+
+Input.onEscape(() => {
+    if (settingsOpen) {
+        closeSettings();
+    } else {
+        openSettings();
+    }
+});
+
+// Capture key for rebinding
+window.addEventListener('keydown', (e) => {
+    if (!settingsOpen || !listeningForAction) return;
+    const key = e.key === ' ' ? ' ' : e.key.toLowerCase();
+    if (key === 'escape') { closeSettings(); return; }
+    e.preventDefault();
+    Input.setBinding(listeningForAction, key);
+    listeningForAction = null;
+    renderBindings();
+});
+
+document.getElementById('reset-bindings-btn').addEventListener('click', () => {
+    Input.resetBindings();
+    listeningForAction = null;
+    renderBindings();
+});
+
+document.getElementById('close-settings-btn').addEventListener('click', closeSettings);
+
+// Click outside panel to close
+settingsOverlay.addEventListener('click', (e) => {
+    if (e.target === settingsOverlay) closeSettings();
+});
 
 // --- Render loop ---
 let lastFrameTime = performance.now();
