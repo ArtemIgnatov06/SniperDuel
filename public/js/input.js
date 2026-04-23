@@ -27,6 +27,8 @@ const Input = (() => {
     let eKeyPending = false;
     let qKeyPending = false;
     let shiftPending = false;
+    let onShootCallback = null;
+    let onRMBCallback = null;
 
     function setCanvasMetrics(canvas) {
         const rect = canvas.getBoundingClientRect();
@@ -67,8 +69,14 @@ const Input = (() => {
 
     window.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        if (e.button === 0) shootPending = true;
-        if (e.button === 2) placeBlockPending = true;
+        if (e.button === 0) {
+            shootPending = true;
+            if (onShootCallback) onShootCallback();
+        }
+        if (e.button === 2) {
+            placeBlockPending = true;
+            if (onRMBCallback) onRMBCallback({ mouseX, mouseY });
+        }
     });
 
     window.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -141,6 +149,8 @@ const Input = (() => {
                 jump: !!(keys[' '] || keys['w']),
             };
         },
+        onShoot(fn) { onShootCallback = fn; },
+        onRMB(fn) { onRMBCallback = fn; },
         // Called once per frame from game.js to get and clear one-shot special keys
         consumeSpecialKeys() {
             const result = { e: eKeyPending, q: qKeyPending, shift: shiftPending };

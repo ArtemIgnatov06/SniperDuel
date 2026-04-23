@@ -78,6 +78,48 @@ function clientRectOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
     return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 
+// Ray vs AABB — returns t of first intersection or null
+function clientRayVsRect(ox, oy, dx, dy, rx, ry, rw, rh) {
+    let tmin = -Infinity;
+    let tmax = Infinity;
+    if (Math.abs(dx) < 1e-8) {
+        if (ox < rx || ox > rx + rw) return null;
+    } else {
+        const t1 = (rx - ox) / dx;
+        const t2 = (rx + rw - ox) / dx;
+        tmin = Math.max(tmin, Math.min(t1, t2));
+        tmax = Math.min(tmax, Math.max(t1, t2));
+    }
+    if (Math.abs(dy) < 1e-8) {
+        if (oy < ry || oy > ry + rh) return null;
+    } else {
+        const t1 = (ry - oy) / dy;
+        const t2 = (ry + rh - oy) / dy;
+        tmin = Math.max(tmin, Math.min(t1, t2));
+        tmax = Math.min(tmax, Math.max(t1, t2));
+    }
+    if (tmax < 0 || tmin > tmax) return null;
+    const t = tmin >= 0 ? tmin : tmax;
+    return t >= 0 ? t : null;
+}
+
+// Show tracer immediately on client — stops at nearest block
+function showClientTracer() {
+    if (!localPlayer.initialized || !localPlayer.alive) return;
+    const ox = localPlayer.x + PLAYER_WIDTH / 2 + (localPlayer.facingRight ? 14 : -14);
+    const oy = localPlayer.y + PLAYER_HEIGHT / 2 - 10;
+    const dx = Math.cos(localPlayer.aimAngle);
+    const dy = Math.sin(localPlayer.aimAngle);
+
+    let closestT = GAME_WIDTH * 2;
+    for (const solid of [...blocks, ...playerBlocks]) {
+        const t = clientRayVsRect(ox, oy, dx, dy, solid.x, solid.y, BLOCK_SIZE, BLOCK_SIZE);
+        if (t !== null && t < closestT) closestT = t;
+    }
+
+    Renderer.addTracer(ox, oy, ox + dx * closestT, oy + dy * closestT);
+}
+
 // Place block immediately on the client, send to server for authoritative confirmation.
 // Server will send blockPlaced back — we replace the temp block with the real one by position.
 let localBlockSeq = 0;
@@ -310,7 +352,24 @@ function pruneSnapshots(now) {
     }
 }
 
-// newGameBtn behaviour is set per-context via .onclick — no generic listener here
+// Shoot: show tracer immediately on client, don't wait for server
+Input.onShoot(() => {
+    if (localPlayer.shootCooldown <= 0) {
+        showClientTracer();
+    }
+});
+
+// RMB block placement: optimistic like E/Q
+Input.onRMB(({ mouseX, mouseY }) => {
+    if (!localPlayer.initialized || !localPlayer.alive || localPlayer.blockCount <= 0) return;
+    const px = localPlayer.x + PLAYER_WIDTH / 2;
+    const py = localPlayer.y + PLAYER_HEIGHT / 2;
+    const dist = Math.sqrt((mouseX - px) ** 2 + (mouseY - py) ** 2);
+    if (dist > 150) return;
+    const bx = Math.floor(mouseX / BLOCK_SIZE) * BLOCK_SIZE;
+    const by = Math.floor(mouseY / BLOCK_SIZE) * BLOCK_SIZE;
+    optimisticPlaceBlock(bx, by);
+});
 
 // --- Network events ---
 Network.onJoined((data) => {
@@ -346,7 +405,10 @@ Network.onSnapshot((snapshot) => {
 });
 
 Network.onTracer((data) => {
-    Renderer.addTracer(data.ox, data.oy, data.hx, data.hy);
+    // Own tracer was already shown client-side — only show server tracer for opponent
+    if (data.shooterNum !== myPlayerNum) {
+        Renderer.addTracer(data.ox, data.oy, data.hx, data.hy);
+    }
 });
 
 Network.onPlayerDied((data) => {
@@ -404,10 +466,6 @@ Network.onRoomFull(() => {
 });
 
 // --- Overlay helpers ---
-newGameBtn.addEventListener('click', () => {
-    window.location.href = '/';
-});
-
 function showWaitingMessage() {
     const roomId = Network.roomId;
     const url = `${window.location.origin}/game.html?room=${roomId}`;

@@ -1,6 +1,6 @@
 // Handles socket.io connection and server communication
 const Network = (() => {
-    const socket = io();
+    const socket = io({ transports: ['websocket'] });
     let _onJoined = null;
     let _onGameStart = null;
     let _onSnapshot = null;

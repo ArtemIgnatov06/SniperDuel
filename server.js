@@ -475,7 +475,8 @@ function processActions(room) {
 
                 io.to(room.id).emit('tracer', {
                     ox: result.originX, oy: result.originY,
-                    hx: result.hitX, hy: result.hitY
+                    hx: result.hitX, hy: result.hitY,
+                    shooterNum: player.playerNum
                 });
 
                 if (result.hitType === 'player') {
